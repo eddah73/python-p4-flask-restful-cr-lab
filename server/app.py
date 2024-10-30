@@ -21,21 +21,21 @@ class Plants(Resource):
     def get(self):
         # Retrieve all plants and return as JSON
         response_dict = [n.to_dict() for n in Plant.query.all()]
-        response = make_response(
-            jsonify(response_dict),
-            200,
-        )
-        return response
+        return make_response(jsonify(response_dict), 200)
 
     def post(self):
         # Extract data from the request
         data = request.get_json()
-        
+
+        # Validate required fields
+        if not data.get('name') or not data.get('price'):
+            return make_response({"error": "Name and price are required fields."}, 400)
+
         # Create a new Plant instance
         new_plant = Plant(
-            name=data.get('name'),
-            image=data.get('image'),
-            price=data.get('price')
+            name=data['name'],
+            image=data.get('image'),  # Optional field
+            price=data['price']
         )
 
         # Add the new plant to the session and commit
@@ -51,16 +51,9 @@ class PlantByID(Resource):
         # Use session.get to retrieve a plant by ID
         plant = db.session.get(Plant, id)
         if plant:
-            response = make_response(
-                jsonify(plant.to_dict()),
-                200,
-            )
+            return make_response(jsonify(plant.to_dict()), 200)
         else:
-            response = make_response(
-                {"error": "Plant not found"},
-                404,
-            )
-        return response
+            return make_response({"error": "Plant not found"}, 404)
 
 # Register resources with Flask-RESTful
 api.add_resource(Plants, '/plants')
